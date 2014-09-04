@@ -180,5 +180,36 @@ namespace SudokuDogan
             txtActivities.Text = string.Empty;
             txtActivities.Text = "Selected number has been erased.";
         }
+
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            
+            DialogResult result= MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            switch (result)
+            {
+
+                case DialogResult.Cancel: MessageBox.Show("Are you sure?");
+                    return;
+
+                case DialogResult.No: MessageBox.Show("You have chosen not to save the current game!");
+                    return;
+
+                case DialogResult.Yes: SaveGameToDisk(false);
+                    return;
+                
+            }
+
+            StartNewGame();
+        }
+
+        private void SaveGameToDisk(bool p)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void StartNewGame()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
