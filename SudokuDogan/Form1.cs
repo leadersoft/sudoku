@@ -209,6 +209,18 @@ namespace SudokuDogan
 
         private void StartNewGame()
         {
+            saveFileName = string.Empty;
+            txtActivities.Text = string.Empty;
+            seconds = 0;
+            ClearBoard();
+
+            GameStarted = true;
+            timer1.Enabled = true;
+            toolStripStatusLabel1.Text = "New game started";
+        }
+
+        private void ClearBoard()
+        {
             throw new NotImplementedException();
         }
     }
