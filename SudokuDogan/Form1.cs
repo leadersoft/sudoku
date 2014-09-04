@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Media;
 
 namespace SudokuDogan
 {
@@ -76,7 +77,176 @@ namespace SudokuDogan
 
         private void Cell_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (!GameStarted)
+            {
+                DisplayActivity("Click File->New to start a new" + " game or File->Open to load an existing game", true);
+                return;
+            }
+            Label cellLabel = (Label)sender;
+            if (cellLabel.Tag.ToString() == "0")
+            {
+                DisplayActivity("Selected cell is not empty", false);
+                return;
+            }
+
+            int col = cellLabel.Name.Substring(0,1); 
+            int row = cellLabel.Name.ToString().Substring(1, 1);
+
+            if (SelectedNumber == 0)
+            {
+                if (actual[col, row] == 0)
+                    return;
+
+                SetCell(col, row, SelectedNumber, 1);
+                DisplayActivity("Number erased at (" + col + "," + row + ")", false);
+            }
+            else if (cellLabel.Text == string.Empty)
+            {
+                if (!IsMoveValid(col, row, SelectedNumber))
+                {
+                   DisplayActivity("Invalid move at (" + col + "," + row + ")", false);
+                    return;
+                }
+
+                SetCell(col, row, SelectedNumber, 1);
+                DisplayActivity("Number placed at (" + col + "," + row + ")", false);
+                Moves.Push(cellLabel.Name.ToString() + SelectedNumber);
+                if (IsPuzzleSolved())
+                {
+                    timer1.Enabled = false;
+                    //Interaction.Beep();
+                    SystemSounds.Beep.Play();
+                    toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
+                }
+            }
+        }
+
+        private void DisplayActivity(string p1, bool p2)
+        {
+            if (p2)
+            {
+                SystemSounds.Beep.Play();
+                
+            }
+            txtActivities.Text += p1 + Environment.NewLine;
+        }
+
+        private void SetCell(int col, int row, int SelectedNumber, int p)
+        {
+            Control[] lbl = this.Controls.Find(col.ToString() + row.ToString(), true);
+            Label cellLabel = (Label)lbl[0];
+
+            actual[col, row] = SelectedNumber;
+            if (SelectedNumber == 0)
+            {
+                cellLabel.Text = string.Empty;
+                cellLabel.Tag = erasable;
+                cellLabel.BackColor = DEFAULT_BACKCOLOR;
+
+            }
+            else
+            {
+                if (erasable == 0)
+                {
+                    cellLabel.BackColor = FIXED_BACKCOLOR;
+                    cellLabel.ForeColor = FIXED_FORECOLOR;
+                }
+                else
+                {
+                    cellLabel.BackColor = USER_BACKCOLOR;
+                    cellLabel.ForeColor = USER_FORECOLOR;
+                }
+                cellLabel.Text = SelectedNumber.ToString();
+                cellLabel.Tag = erasable;
+            }
+        }
+
+        private bool IsPuzzleSolved()
+        {
+            string pattern = null;
+            int r = 0;
+            int c = 0;
+            for (r = 1; r <= 9; r++)
+            {
+                pattern = "123456789";
+                for (c = 1; c <= 9; c++)
+                {
+                    pattern = pattern.Replace(actual[c, r].ToString(), string.Empty);
+                }
+                if (pattern.Length > 0)
+                {
+                    return false;
+                }
+            }
+
+            for (c = 1; c <= 9; c++)
+            {
+                pattern = "123456789";
+                for (r = 1; r <= 9; r++)
+                {
+                    pattern = pattern.Replace(actual[c, r].ToString(), string.Empty);
+                }
+                if (pattern.Length > 0)
+                {
+                    return false;
+                }
+            }
+
+            for (c = 1; c <= 9; c += 3)
+            {
+                pattern = "123456789";
+                for (r = 1; r <= 9; r += 3)
+                {
+                    for (int cc = 0; cc <= 2; cc++)
+                    {
+                        for (int rr = 0; rr <= 2; rr++)
+                        {
+                            pattern = pattern.Replace(actual[c + cc, r + rr].ToString(), string.Empty);
+
+                        }
+                    }
+                }
+                if (pattern.Length > 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool IsMoveValid(int col, int row, int SelectedNumber)
+        {
+            bool puzzleSolved = true;
+            for (int r = 1; r <= 9; r++)
+            {
+                if (actual[col, r] == SelectedNumber)
+                {
+                    return false;
+                }
+            }
+            for (int c = 1; c <= 9; c++)
+            {
+                if (actual[c, row] == SelectedNumber)
+                {
+                    return false;
+                }
+            }
+
+            int startC = 0;
+            int startR = 0;
+            startC = col - ((col - 1) % 3);
+            startR = row - ((row - 1) % 3);
+            for (int rr = 0; rr <= 2; rr++)
+            {
+                for (int cc = 0; cc <= 2; cc++)
+                {
+                    if (actual[startC + cc, startR + rr] == SelectedNumber)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
       
