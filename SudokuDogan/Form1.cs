@@ -184,19 +184,13 @@ namespace SudokuDogan
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             
-            DialogResult result= MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            DialogResult result= MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             switch (result)
             {
-
-                case DialogResult.Cancel: MessageBox.Show("Are you sure?");
-                    return;
-
+                case DialogResult.Yes: SaveGameToDisk(false);
+                    break;
                 case DialogResult.No: MessageBox.Show("You have chosen not to save the current game!");
                     return;
-
-                case DialogResult.Yes: SaveGameToDisk(false);
-                    return;
-                
             }
 
             StartNewGame();
@@ -204,7 +198,8 @@ namespace SudokuDogan
 
         private void SaveGameToDisk(bool p)
         {
-            throw new NotImplementedException();
+            MessageBox.Show("The game is saved!");
+            return;
         }
 
         private void StartNewGame()
@@ -221,7 +216,21 @@ namespace SudokuDogan
 
         private void ClearBoard()
         {
-            throw new NotImplementedException();
+            Moves = new Stack<string>();
+            RedoMoves = new Stack<string>();
+            for (int row = 1; row <= 9; row++)
+            {
+                for (int col = 1; col <= 9; col++)
+                {
+                    //SetCell(col, row, 0, 1);
+                }
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            toolStripStatusLabel2.Text = "Elapsed time: " + seconds + " second(s)";
+            seconds += 1;
         }
     }
 }
