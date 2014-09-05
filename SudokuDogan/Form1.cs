@@ -89,8 +89,8 @@ namespace SudokuDogan
                 return;
             }
 
-            int col = cellLabel.Name.Substring(0,1); 
-            int row = cellLabel.Name.ToString().Substring(1, 1);
+            int col = int.Parse(cellLabel.Name.Substring(0, 1)); 
+            int row = int.Parse(cellLabel.Name.Substring(1, 1));
 
             if (SelectedNumber == 0)
             {
@@ -131,7 +131,7 @@ namespace SudokuDogan
             txtActivities.Text += p1 + Environment.NewLine;
         }
 
-        private void SetCell(int col, int row, int SelectedNumber, int p)
+        private void SetCell(int col, int row, int SelectedNumber, int erasable)
         {
             Control[] lbl = this.Controls.Find(col.ToString() + row.ToString(), true);
             Label cellLabel = (Label)lbl[0];
@@ -249,8 +249,6 @@ namespace SudokuDogan
             return true;
         }
 
-      
-
         private void Form1_Load(object sender, EventArgs e)
         {
             toolStripStatusLabel1.Text = string.Empty;
@@ -285,70 +283,70 @@ namespace SudokuDogan
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             SelectedNumber = 1;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 1";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 1" + Environment.NewLine;
         }
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
             SelectedNumber = 2;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 2";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 2" + Environment.NewLine;
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
             SelectedNumber = 3;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 3";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 3" + Environment.NewLine;
         }
 
         private void toolStripButton4_Click(object sender, EventArgs e)
         {
             SelectedNumber = 4;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 4";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 4" + Environment.NewLine;
         }
 
         private void toolStripButton5_Click(object sender, EventArgs e)
         {
             SelectedNumber = 5;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 5";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 5" + Environment.NewLine;
         }
 
         private void toolStripButton6_Click(object sender, EventArgs e)
         {
             SelectedNumber = 6;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 6";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 6" + Environment.NewLine;
         }
 
         private void toolStripButton7_Click(object sender, EventArgs e)
         {
             SelectedNumber = 7;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 7";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 7" + Environment.NewLine;
         }
 
         private void toolStripButton8_Click(object sender, EventArgs e)
         {
             SelectedNumber = 8;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 8";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 8" + Environment.NewLine;
         }
 
         private void toolStripButton9_Click(object sender, EventArgs e)
         {
             SelectedNumber = 9;
-            txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number = 9";
+            //txtActivities.Text = string.Empty;
+            txtActivities.Text += "Selected number = 9" + Environment.NewLine;
         }
 
         private void toolStripButton10_Click(object sender, EventArgs e)
         {
             SelectedNumber = 0;
             txtActivities.Text = string.Empty;
-            txtActivities.Text = "Selected number has been erased.";
+            txtActivities.Text = "Selected number has been erased." + Environment.NewLine;
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -392,7 +390,7 @@ namespace SudokuDogan
             {
                 for (int col = 1; col <= 9; col++)
                 {
-                    //SetCell(col, row, 0, 1);
+                    SetCell(col, row, 0, 1);
                 }
             }
         }
