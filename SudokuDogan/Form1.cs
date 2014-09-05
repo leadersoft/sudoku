@@ -366,8 +366,47 @@ namespace SudokuDogan
 
         private void SaveGameToDisk(bool p)
         {
-            MessageBox.Show("The game is saved!");
-            return;
+            //if(saveFileName == string.Empty ||  saveAs)
+            if (saveFileName == string.Empty)
+            {
+                SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+                saveFileDialog1.Filter = "SDO files (*.sdo)|*.sdo|All files (*.*)|*.*";
+                saveFileDialog1.FilterIndex = 1;
+                saveFileDialog1.RestoreDirectory = false;
+                if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+
+                    saveFileName = saveFileDialog1.FileName;
+
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            System.Text.StringBuilder str = new System.Text.StringBuilder();
+            for (int row = 1; row <= 9; row++)
+            {
+                for (int col = 1; col <= 9; col++)
+                {
+                    str.Append(actual[col, row].ToString());
+                }
+            }
+
+            try
+            {
+                bool fileExists = false;
+                fileExists = System.IO.File.Exists(saveFileName);
+                    if (fileExists)
+	                System.IO.File.Delete(saveFileName);
+                    System.IO.File.WriteAllText(str.ToString(),saveFileName, Encoding.UTF8);
+                    toolStripStatusLabel1.Text = "Puzzle saved in " + saveFileName;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving game. Please try again.");
+            }
         }
 
         private void StartNewGame()
@@ -399,6 +438,32 @@ namespace SudokuDogan
         {
             toolStripStatusLabel2.Text = "Elapsed time: " + seconds + " second(s)";
             seconds += 1;
+        }
+
+        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Moves.Count == 0)
+                return;
+
+            string str = Moves.Pop();
+            RedoMoves.Push(str);
+
+            
+
+//SetCell(int.Parse(str.Split()), int.Parse(Conversion.str[1]), 0, 1);
+//DisplayActivity("Value removed at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
+
+        }
+
+        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (RedoMoves.Count == 0)
+                return;
+
+            string str = RedoMoves.Pop();
+            Moves.Push(str);
+            //SetCell(int.Parse(Conversion.str[0]), int.Parse(Conversion.str[1]), int.Parse(Conversion.str[2]), 1);
+            //DisplayActivity("Value reinserted at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
         }
     }
 }
