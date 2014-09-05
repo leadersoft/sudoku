@@ -449,7 +449,7 @@ namespace SudokuDogan
             RedoMoves.Push(str);
 
             
-
+//need to solve this array problem later! 
 //SetCell(int.Parse(str.Split()), int.Parse(Conversion.str[1]), 0, 1);
 //DisplayActivity("Value removed at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
 
@@ -462,6 +462,7 @@ namespace SudokuDogan
 
             string str = RedoMoves.Pop();
             Moves.Push(str);
+            //the same array problem
             //SetCell(int.Parse(Conversion.str[0]), int.Parse(Conversion.str[1]), int.Parse(Conversion.str[2]), 1);
             //DisplayActivity("Value reinserted at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
         }
@@ -555,5 +556,10 @@ namespace SudokuDogan
                 }
             }
         }
+
+        //private void toolTip1_Popup(object sender, PopupEventArgs e)
+        //{
+
+        //}
     }
 }
