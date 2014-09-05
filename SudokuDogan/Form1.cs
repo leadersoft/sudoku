@@ -465,5 +465,95 @@ namespace SudokuDogan
             //SetCell(int.Parse(Conversion.str[0]), int.Parse(Conversion.str[1]), int.Parse(Conversion.str[2]), 1);
             //DisplayActivity("Value reinserted at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
         }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GameStarted)
+            {
+                DisplayActivity("Game not started yet.", true);
+                return;
+            }
+            SaveGameToDisk(true);
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GameStarted)
+            {
+                DisplayActivity("Game not started yet.", true);
+                return;
+            }
+            SaveGameToDisk(false);
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (GameStarted)
+            {
+                DialogResult response = MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (response == DialogResult.Yes)
+                {
+                    SaveGameToDisk(false);
+                }
+                else if (response == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+            string fileContents = null;
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "SDO files (*.sdo)|*.sdo|All files (*.*)|*.*";
+            openFileDialog1.FilterIndex = 1;
+            openFileDialog1.RestoreDirectory = false;
+            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                fileContents = System.IO.File.ReadAllText(openFileDialog1.FileName);
+                toolStripStatusLabel1.Text = openFileDialog1.FileName;
+                saveFileName = openFileDialog1.FileName;
+            }
+            else
+            {
+                return;
+            }
+            StartNewGame();
+
+            short counter = 0;
+            for (int row = 1; row <= 9; row++)
+            {
+                for (int col = 1; col <= 9; col++)
+                {
+                    try
+                    {
+                        if (Convert.ToInt32(counter.ToString()) != 0)
+                        {
+                            SetCell(col, row, Convert.ToInt32(counter.ToString()), 0);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("File does not contain a valid Sudoku puzzle");
+                        return;
+                    }
+                    counter += 1;
+                }
+            }
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (GameStarted)
+            {
+                DialogResult response = MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                if (response == DialogResult.Yes)
+                {
+                    SaveGameToDisk(false);
+                }
+                else if (response == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+        }
     }
 }
