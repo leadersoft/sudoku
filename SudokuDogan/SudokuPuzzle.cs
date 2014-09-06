@@ -88,6 +88,7 @@ namespace SudokuDogan
     //    //}
     //    //}
 
+
     //    private string GenerateNewPuzzle(int level, int score) {
     //    int c;
     //    int r;

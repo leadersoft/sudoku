@@ -306,26 +306,32 @@
             // 
             // easyToolStripMenuItem
             // 
+            this.easyToolStripMenuItem.Checked = true;
+            this.easyToolStripMenuItem.CheckOnClick = true;
+            this.easyToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.easyToolStripMenuItem.Name = "easyToolStripMenuItem";
-            this.easyToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.easyToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.easyToolStripMenuItem.Text = "&Easy";
             // 
             // mediumToolStripMenuItem
             // 
+            this.mediumToolStripMenuItem.CheckOnClick = true;
             this.mediumToolStripMenuItem.Name = "mediumToolStripMenuItem";
-            this.mediumToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.mediumToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.mediumToolStripMenuItem.Text = "&Medium";
             // 
             // hardToolStripMenuItem
             // 
+            this.hardToolStripMenuItem.CheckOnClick = true;
             this.hardToolStripMenuItem.Name = "hardToolStripMenuItem";
-            this.hardToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.hardToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.hardToolStripMenuItem.Text = "&Hard";
             // 
             // samuraiToolStripMenuItem
             // 
+            this.samuraiToolStripMenuItem.CheckOnClick = true;
             this.samuraiToolStripMenuItem.Name = "samuraiToolStripMenuItem";
-            this.samuraiToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.samuraiToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.samuraiToolStripMenuItem.Text = "&Samurai";
             // 
             // helpToolStripMenuItem
@@ -526,6 +532,7 @@
             this.btnHint.TabIndex = 3;
             this.btnHint.Text = "Hint";
             this.btnHint.UseVisualStyleBackColor = true;
+            this.btnHint.Click += new System.EventHandler(this.btnHint_Click);
             // 
             // btnSolvePuzzle
             // 
@@ -535,6 +542,7 @@
             this.btnSolvePuzzle.TabIndex = 4;
             this.btnSolvePuzzle.Text = "Solve Puzzle";
             this.btnSolvePuzzle.UseVisualStyleBackColor = true;
+            this.btnSolvePuzzle.Click += new System.EventHandler(this.btnSolvePuzzle_Click);
             // 
             // label1
             // 
