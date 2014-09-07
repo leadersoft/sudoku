@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Media;
+using System.IO;
 
 namespace SudokuDogan
 {
@@ -32,11 +33,15 @@ namespace SudokuDogan
 
         private Stack<string> Moves;
         private Stack<string> RedoMoves;
+        private Stack<int[,]> ActualStack = new Stack<int[,]>();
+        private Stack<string[,]> PossibleStack = new Stack<string[,]>();
+
+        private bool BruteForceStop = false;
 
         private string saveFileName = string.Empty;
-
-
         private int[,] actual = new int[10, 10];
+        private string[,] possible = new string[10, 10];
+        private bool HintMode;
         private int seconds = 0;
 
         private bool GameStarted = false;
@@ -79,12 +84,14 @@ namespace SudokuDogan
         {
             if (!GameStarted)
             {
+                //txtActivitis shows a warning to the user
                 DisplayActivity("Click File->New to start a new" + " game or File->Open to load an existing game", true);
                 return;
             }
             Label cellLabel = (Label)sender;
             if (cellLabel.Tag.ToString() == "0")
             {
+                //txtActivities shows that is not a valid move. 
                 DisplayActivity("Selected cell is not empty", false);
                 return;
             }
@@ -92,13 +99,17 @@ namespace SudokuDogan
             int col = int.Parse(cellLabel.Name.Substring(0, 1)); 
             int row = int.Parse(cellLabel.Name.Substring(1, 1));
 
+            //to erase a cell
             if (SelectedNumber == 0)
             {
                 if (actual[col, row] == 0)
+                    //it means that the cell is empty so dont do anything
                     return;
-
-                SetCell(col, row, SelectedNumber, 1);
-                DisplayActivity("Number erased at (" + col + "," + row + ")", false);
+                else
+                {
+                    SetCell(col, row, SelectedNumber, 1);
+                    DisplayActivity("Number erased at (" + col + "," + row + ")", false);
+                }
             }
             else if (cellLabel.Text == string.Empty)
             {
@@ -131,13 +142,36 @@ namespace SudokuDogan
             txtActivities.Text += p1 + Environment.NewLine;
         }
 
-        private void SetCell(int col, int row, int SelectedNumber, int erasable)
+        private void SetCell(int col, int row, int value, int erasable)
         {
+            //label for locating
             Control[] lbl = this.Controls.Find(col.ToString() + row.ToString(), true);
             Label cellLabel = (Label)lbl[0];
 
-            actual[col, row] = SelectedNumber;
-            if (SelectedNumber == 0)
+            //saving the actual cell
+            actual[col, row] = value;
+
+            //reset the possible values
+            if ((value == 0))
+            {
+                for (int r = 1; (r <= 9); r++)
+                {
+                    for (int c = 1; (c <= 9); c++)
+                    {
+                        if ((actual[c, r] == 0))
+                        {
+                            possible[c, r] = String.Empty;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                possible[col, row] = value.ToString();
+            }
+            
+            //erasing the cell
+            if (value == 0)
             {
                 cellLabel.Text = string.Empty;
                 cellLabel.Tag = erasable;
@@ -156,13 +190,19 @@ namespace SudokuDogan
                     cellLabel.BackColor = USER_BACKCOLOR;
                     cellLabel.ForeColor = USER_FORECOLOR;
                 }
-                cellLabel.Text = SelectedNumber.ToString();
+                cellLabel.Text = value.ToString();
                 cellLabel.Tag = erasable;
             }
         }
 
+        public void SetToolTip(int col, int row, string possiblevalues)
+        {
+            Control[] lbl = this.Controls.Find((col.ToString() + row.ToString()), true);
+            toolTip1.SetToolTip(((Label)(lbl[0])), possiblevalues);
+        }
         private bool IsPuzzleSolved()
         {
+            //now checking the row by row 
             string pattern = null;
             int r = 0;
             int c = 0;
@@ -179,6 +219,7 @@ namespace SudokuDogan
                 }
             }
 
+            //checking each column 
             for (c = 1; c <= 9; c++)
             {
                 pattern = "123456789";
@@ -192,6 +233,7 @@ namespace SudokuDogan
                 }
             }
 
+            //checking each minigrid
             for (c = 1; c <= 9; c += 3)
             {
                 pattern = "123456789";
@@ -216,7 +258,9 @@ namespace SudokuDogan
 
         private bool IsMoveValid(int col, int row, int SelectedNumber)
         {
-            bool puzzleSolved = true;
+            //here is the algorthym for the Sudoku valid move
+            //bool puzzleSolved = true;
+            //each row- if there is number 
             for (int r = 1; r <= 9; r++)
             {
                 if (actual[col, r] == SelectedNumber)
@@ -224,6 +268,7 @@ namespace SudokuDogan
                     return false;
                 }
             }
+            //each coloumn- if there is the number
             for (int c = 1; c <= 9; c++)
             {
                 if (actual[c, row] == SelectedNumber)
@@ -231,7 +276,7 @@ namespace SudokuDogan
                     return false;
                 }
             }
-
+            //each minigrid
             int startC = 0;
             int startR = 0;
             startC = col - ((col - 1) % 3);
@@ -358,7 +403,7 @@ namespace SudokuDogan
                 case DialogResult.Yes: SaveGameToDisk(false);
                     break;
                 case DialogResult.No: MessageBox.Show("You have chosen not to save the current game!");
-                    return;
+                   break;
             }
 
             StartNewGame();
@@ -366,18 +411,17 @@ namespace SudokuDogan
 
         private void SaveGameToDisk(bool p)
         {
-            //if(saveFileName == string.Empty ||  saveAs)
-            if (saveFileName == string.Empty)
+            if (saveFileName == string.Empty )
             {
                 SaveFileDialog saveFileDialog1 = new SaveFileDialog();
                 saveFileDialog1.Filter = "SDO files (*.sdo)|*.sdo|All files (*.*)|*.*";
                 saveFileDialog1.FilterIndex = 1;
                 saveFileDialog1.RestoreDirectory = false;
-                if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                saveFileDialog1.Title = "Save an Sudoku File";
+                saveFileDialog1.ShowDialog();
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                 {
-
                     saveFileName = saveFileDialog1.FileName;
-
                 }
                 else
                 {
@@ -385,28 +429,37 @@ namespace SudokuDogan
                 }
             }
 
-            System.Text.StringBuilder str = new System.Text.StringBuilder();
-            for (int row = 1; row <= 9; row++)
-            {
-                for (int col = 1; col <= 9; col++)
-                {
-                    str.Append(actual[col, row].ToString());
-                }
-            }
 
-            try
-            {
-                bool fileExists = false;
-                fileExists = System.IO.File.Exists(saveFileName);
+            System.Text.StringBuilder str = new System.Text.StringBuilder();
+                for (int row = 1; row <= 9; row++)
+                {
+                    for (int col = 1; col <= 9; col++)
+                    {
+                        str.Append(actual[col, row].ToString());
+                        if (col == 9)
+	                        {
+		                       str.Append(Environment.NewLine);
+	                        }
+                    }
+                    
+                }
+
+                try
+                {
+                    bool fileExists = false;
+                    fileExists = System.IO.File.Exists(saveFileName);
                     if (fileExists)
-	                System.IO.File.Delete(saveFileName);
-                    System.IO.File.WriteAllText(str.ToString(),saveFileName, Encoding.UTF8);
-                    toolStripStatusLabel1.Text = "Puzzle saved in " + saveFileName;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error saving game. Please try again.");
-            }
+                        System.IO.File.Delete(saveFileName); 
+                        System.IO.File.WriteAllText(saveFileName, str.ToString(), Encoding.UTF8);
+                        toolStripStatusLabel1.Text = "Puzzle saved in " + saveFileName;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error saving game. Please try again." + ex);
+                }
+            
+
+
         }
 
         private void StartNewGame()
@@ -415,10 +468,13 @@ namespace SudokuDogan
             txtActivities.Text = string.Empty;
             seconds = 0;
             ClearBoard();
+            //GenerateNewPuzzle(1,40);
 
             GameStarted = true;
             timer1.Enabled = true;
             toolStripStatusLabel1.Text = "New game started";
+
+            toolTip1.RemoveAll();
         }
 
         private void ClearBoard()
@@ -442,16 +498,17 @@ namespace SudokuDogan
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Moves.Count == 0)
+            if ((Moves.Count == 0))
+            {
                 return;
+            }
 
             string str = Moves.Pop();
             RedoMoves.Push(str);
-
             
-//need to solve this array problem later! 
-//SetCell(int.Parse(str.Split()), int.Parse(Conversion.str[1]), 0, 1);
-//DisplayActivity("Value removed at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
+            SetCell(int.Parse(str), int.Parse(str), 0, 1);
+            DisplayActivity(("Value removed at (" + (int.Parse(str) + ")")), false);
+
 
         }
 
@@ -462,9 +519,10 @@ namespace SudokuDogan
 
             string str = RedoMoves.Pop();
             Moves.Push(str);
-            //the same array problem
-            //SetCell(int.Parse(Conversion.str[0]), int.Parse(Conversion.str[1]), int.Parse(Conversion.str[2]), 1);
-            //DisplayActivity("Value reinserted at (" + int.Parse(Conversion.str[0]) + "," + int.Parse(Conversion.str[1]) + ")", false);
+            
+            //not sure if it might work
+            SetCell(int.Parse(str), int.Parse(str), int.Parse(str), 1);
+            DisplayActivity(("Value reinserted at (" + int.Parse(str)+ ")"), false);
         }
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -501,14 +559,17 @@ namespace SudokuDogan
                     return;
                 }
             }
-            string fileContents = null;
+            
+            string[] fileContents;
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
             openFileDialog1.Filter = "SDO files (*.sdo)|*.sdo|All files (*.*)|*.*";
             openFileDialog1.FilterIndex = 1;
             openFileDialog1.RestoreDirectory = false;
-            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                fileContents = System.IO.File.ReadAllText(openFileDialog1.FileName);
+                fileContents = System.IO.File.ReadAllLines(openFileDialog1.FileName);
                 toolStripStatusLabel1.Text = openFileDialog1.FileName;
                 saveFileName = openFileDialog1.FileName;
             }
@@ -516,28 +577,134 @@ namespace SudokuDogan
             {
                 return;
             }
+            
             StartNewGame();
 
-            short counter = 0;
-            for (int row = 1; row <= 9; row++)
+           
+
+            //starting the board
+            int counter;
+            
+            
+            for (int row = 1; (row <= 9); row++)
             {
-                for (int col = 1; col <= 9; col++)
+                counter = 0;
+                for (int col = 1; (col <= 9); col++)
                 {
+                  
                     try
                     {
-                        if (Convert.ToInt32(counter.ToString()) != 0)
+                        if (int.Parse(fileContents[row-1][counter].ToString()) != 0 )
+                            
                         {
-                            SetCell(col, row, Convert.ToInt32(counter.ToString()), 0);
+                            //erasable is 1- but in normal way it should be 0 so user cannot change the numbers.
+                            SetCell(col, row, int.Parse(fileContents[row-1][counter].ToString()), 0);
+                            
                         }
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        MessageBox.Show("File does not contain a valid Sudoku puzzle");
+                        MessageBox.Show("File does not contain a valid Sudoku text");
                         return;
                     }
-                    counter += 1;
+                    counter ++;
+                    
                 }
             }
+        }
+
+        private string CalculatePossibleValues(int col,  int row) 
+            {
+       
+            string str;
+            if ((possible[col, row] == String.Empty)) {
+                str = "123456789";
+            }
+            else {
+                str = possible[col, row];
+            }
+            int r;
+            int c;
+            // checking by column 
+            for (r = 1; (r <= 9); r++) {
+                if ((actual[col, r] != 0)) {
+                
+                    str = str.Replace(actual[col, r].ToString(), String.Empty);
+                }
+            }
+            // checking by row 
+            for (c = 1; (c <= 9); c++) 
+            {
+                if ((actual[c, row] != 0)) {
+               
+                    str = str.Replace(actual[c, row].ToString(), String.Empty);
+                }
+            }
+            // check within the minigrid 
+            int startC;
+            int startR;
+            startC = (col - ((col - 1) % 3));
+            startR = (row - ((row - 1) % 3));
+            for (int rr = startR; (rr <= (startR + 2)); rr++) 
+            {
+                for (int cc = startC; (cc <= (startC + 2)); cc++) 
+                {
+                    if ((actual[cc, rr] != 0)) 
+                    {
+                        str = str.Replace(actual[cc, rr].ToString(), String.Empty);
+                    }
+                }
+            }
+            // if there is not possible value, it means that invalid move
+            if ((str == String.Empty)) 
+            {
+            throw new Exception("Invalid Move");
+            }
+            return str;
+      
+
+        }
+
+        public bool CheckColumnsAndRows() 
+        {
+            bool changes = false;
+            for (int row = 1; (row <= 9); row++) 
+            {
+                for (int col = 1; (col <= 9); col++)
+                {
+                    if ((actual[col, row] == 0))
+                    {
+                        try
+                        {
+                            possible[col, row] = CalculatePossibleValues(col, row);
+                        }
+                        catch (Exception ex)
+                        {
+                            DisplayActivity("Invalid placement, please undo move", false);
+                            throw new Exception("Invalid Move");
+                        }
+                        SetToolTip(col, row, possible[col, row]);
+                        if ((possible[col, row].Length == 1))
+                        {
+                            SetCell(col, row, int.Parse(possible[col, row]), 1);
+                            actual[col, row] = int.Parse(possible[col, row]);
+                            DisplayActivity("Col/Row and Minigrid Elimination", false);
+                            DisplayActivity("=========================", false);
+                            DisplayActivity(("Inserted value " + (actual[col, row] + (" in " + ("(" + (col + ("," + (row + ")"))))))), false);
+                            Application.DoEvents();
+                            Moves.Push((col + (row + possible[col, row])));
+                            changes = true;
+                            if (HintMode)
+                            {
+                                return true;
+                            }
+                        }
+                        
+                    }
+                }
+                
+            }
+            return changes;
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -555,11 +722,335 @@ namespace SudokuDogan
                     return;
                 }
             }
+            Application.Exit();
         }
 
-        //private void toolTip1_Popup(object sender, PopupEventArgs e)
-        //{
+        private string GenerateNewPuzzle(int level, int score)
+        {
+            int c;
+            int r;
+            string str;
+            int numberofemptycells;
+            for (r = 1; (r <= 9); r++)
+            {
+                for (c = 1; (c <= 9); c++)
+                {
+                    actual[c, r] = 0;
+                    possible[c, r] = String.Empty;
+                }
+            }
+            ActualStack.Clear();
+            PossibleStack.Clear();
+            //try
+            //{
+            //    if (!SolvePuzzle())
+            //    {
+            //        SolvePuzzleByBruteForce();
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    return String.Empty;
+            //}
 
+            //private int[,] actual_backup = actual.Clone();
+            //actualBackup = actual.Clone();
+            //Random random = new Random();
+            //switch (levelToolStripMenuItem.Tag)
+            //{
+            //    case levelToolStripMenuItem.:
+            //        numberofemptycells = RandomNumber(40, 45);
+            //        break;
+            //    case 2:
+            //        numberofemptycells = RandomNumber(46, 49);
+            //        break;
+            //    case 3:
+            //        numberofemptycells = RandomNumber(50, 53);
+            //        break;
+            //    case 4:
+            //        numberofemptycells = RandomNumber(54, 58);
+            //        break;
+            //}
+            ActualStack.Clear();
+            PossibleStack.Clear();
+            BruteForceStop = false;
+            //CreateEmptyCells(numberofemptycells);
+            str = String.Empty;
+            for (r = 1; (r <= 9); r++)
+            {
+                for (c = 1; (c <= 9); c++)
+                {
+                    actual[c, r].ToString();
+                }
+            }
+            //int tries = 0;
+            for (
+            ; true;
+            )
+            //{
+            //    totalscore = 0;
+            //    try
+            //    {
+            //        if (!SolvePuzzle())
+            //        {
+            //            if ((level < 4))
+            //            {
+            //                VacateAnotherPairOfCells(str);
+            //                tries++;
+            //            }
+            //            else
+            //            {
+            //                SolvePuzzleByBruteForce();
+            //            }
+            //            break; 
+            //        }
+            //        break; 
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        return String.Empty;
+            //    }
+            //    if ((tries > 50))
+            //    {
+            //        return String.Empty;
+            //    }
+            //}
+            //score = totalscore;
+            return str;
+        }
+
+        private int RandomNumber(int p1, int p2)
+        {
+            throw new NotImplementedException();
+        }
+
+        //private void RandomizeThePossibleValues(string str)
+        //{
+        //    char[,] s;
+        //    int i;
+        //    int j;
+        //    char temp;
+        //    Randomize();
+        //    s = str.ToCharArray;
+        //    for (i = 0; (i <= (str.Length - 1)); i++)
+        //    {
+        //        j = (int.Parse(((((str.Length - i) + 1) * Rnd()) + i)) % str.Length);
+        //        temp = s[i];
+        //        s[i] = s[j];
+        //        s[j] = temp;
+        //    }
+        //    str = s;
         //}
+
+    //    private void CreateEmptyCells(int numberofemptycells)
+    //    {
+    //        //private void CreateEmptyCells(int empty) {
+    //        int c;
+    //        int r;
+    //        string[] emptyCells = new string[numberofemptycells-1];
+    //        for (int i = 0; (i <= numberofemptycells / 2); i++) 
+    //        { 
+    //            bool duplicate = false;   
+                
+    //            while ((r == 5) && (c > 5))
+    //             {
+                    
+    //                c = RandomNumber(1, 9);
+    //                r = RandomNumber(1, 5);
+                    
+    //            //for (int j = 0; (j <= i); j++) 
+    //            //{
+    //            //    if (((emptyCells[j] == c.ToString()) + r.ToString())) 
+    //            //    {
+    //            //        duplicate = true;
+    //            //        break;
+    //            //    }
+    //            //}
+    //            if (!duplicate) 
+    //            {
+    //                emptyCells[i] = (c.ToString() + r.ToString());
+    //                actual[c, r] = 0;
+    //                possible[c, r] = String.Empty;
+    //                emptyCells[(numberofemptycells - (1 - i))] = (((10 - c)).ToString() + ((10 - r)).ToString());
+    //                actual[(10 - c), (10 - r)] = 0;
+    //                possible[(10 - c), (10 - r)] = String.Empty;
+    //            }
+    //            }
+    //    }
+    //}
+
+
+        private void btnSolvePuzzle_Click(object sender, EventArgs e)
+        {
+            //MessageBox.Show("It will be show the possible solved sudoku!");
+            //return;
+
+            HintMode = false;
+            try
+            {
+                SolvePuzzle();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Please undo your move", "Invalid Move", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnHint_Click(object sender, EventArgs e)
+        {
+            //MessageBox.Show("Possible numbers in each cell will be shown");
+
+            HintMode = true;
+            try
+            {
+                SolvePuzzle();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Please undo your move", "Invalid Move", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+       
+        public bool SolvePuzzle() 
+        {
+            bool changes;
+            bool ExitLoop = false;
+
+
+            try
+            {
+                do
+                {
+                    changes = CheckColumnsAndRows();
+                    if ((HintMode && changes) || IsPuzzleSolved())
+                    {
+                        ExitLoop = true;
+                        //SolvePuzzleByBruteForce();
+                        break; 
+                    }
+                } while (!(!changes));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid Move");
+            }
+
+        if (IsPuzzleSolved()) {
+            timer1.Enabled = false;
+            SystemSounds.Beep.Play();
+            toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
+            MessageBox.Show("Puzzle solved");
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+        private void easyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            mediumToolStripMenuItem.Checked = false;
+            hardToolStripMenuItem.Checked = false;
+            samuraiToolStripMenuItem.Checked = false;
+        }
+
+        private void mediumToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            easyToolStripMenuItem.Checked = false;
+            hardToolStripMenuItem.Checked = false;
+            samuraiToolStripMenuItem.Checked = false;
+        }
+
+        private void hardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            easyToolStripMenuItem.Checked = false;
+            mediumToolStripMenuItem.Checked = false;
+            samuraiToolStripMenuItem.Checked = false;
+        }
+
+        private void samuraiToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            easyToolStripMenuItem.Checked = false;
+            mediumToolStripMenuItem.Checked = false;
+            hardToolStripMenuItem.Checked = false;
+        }
+
+        //private void SolvePuzzleByBruteForce()
+        //{
+        //    int col;
+        //    int row;
+        //    string possibleValues;
+        //    //FindCellWithFewestPossibleValues(c, r);
+
+         
+        //    int min = 10;
+        //    for (int r = 1; (r <= 9); r++)
+        //    {
+        //        for (int c = 1; (c <= 9); c++)
+        //        {
+        //            if (((actual[c, r] == 0) && (possible[c, r].Length < min)))
+        //            {
+        //                min = possible[c, r].Length;
+                        
+        //                col = c;
+        //                row = r;
+        //            }
+        //        }
+        //    }
+        //    possibleValues = possible[col, row];
+
+        //    //string possibleValues = possible[col, row];
+        //    ActualStack.Push(((int[,])(actual.Clone())));
+        //    PossibleStack.Push(((string[,])(possible.Clone())));
+        //    for (int i = 0; (i <= (possibleValues.Length - 1)); i++)
+        //    {
+        //        Moves.Push((col + (row + possibleValues.ToString())));
+
+        //        SetCell(col, row, int.Parse(possibleValues.ToString()), 1);
+        //        DisplayActivity("Solve Puzzle By Brute Force", false);
+        //        DisplayActivity("===========================", false);
+        //        DisplayActivity(("Trying to insert value " + (actual[col, row] + (" in " + ("(" + (col + ("," + (row + ")"))))))), false);
+
+        //        try
+        //        {
+        //            if (SolvePuzzle())
+        //            {
+        //                BruteForceStop = true;
+        //                return;
+        //            }
+        //            else
+        //            {
+        //                SolvePuzzleByBruteForce();
+        //                if (BruteForceStop)
+        //                    return;
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            DisplayActivity("Invalid move; Backtracking...", false);
+        //            actual = ActualStack.Pop();
+        //            possible = PossibleStack.Pop();
+        //        }
+        //    }
+        //}
+
+        //public void FindCellWithFewestPossibleValues(int col, int row)
+        //{
+        //    int min = 10;
+        //    for (int r = 1; (r <= 9); r++)
+        //    {
+        //        for (int c = 1; (c <= 9); c++)
+        //        {
+        //            if (((actual[c, r] == 0) && (possible[c, r].Length < min)))
+        //            {
+        //                min = possible[c, r].Length;
+        //                col = c;
+        //                row = r;
+        //            }
+        //        }
+        //    }
+        //}
+
     }
 }
