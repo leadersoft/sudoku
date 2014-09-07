@@ -17,43 +17,37 @@ namespace SudokuDogan
     public partial class Form1 : Form
     {
 
-        const int CellWidth = 32;
+        //drawing the board
+        const int cell_Width = 32;
+        const int cell_Height = 32;
+        const int x_Offset = -20;
+        const int y_Offset = 25;
+        private Color deffault_backcolor = Color.White;
+        private Color fixed_forecolor = Color.Blue;
+        private Color fixed_backcolor = Color.LightSteelBlue;
+        private Color user_forecolor = Color.Black;
+        private Color user_backcolor = Color.LightYellow;
+        ///////////////////////////////////////////////////
+ 
+        private int selected_Number;
+        private Stack<string> moves;
+        private Stack<string> redoMoves;
+        private Stack<int[,]> actual_stack = new Stack<int[,]>();
+        private Stack<string[,]> possible_stack = new Stack<string[,]>();
 
-        const int cellHeight = 32;
-        const int xOffset = -20;
-        const int yOffset = 25;
-
-        private Color DEFAULT_BACKCOLOR = Color.White;
-
-        private Color FIXED_FORECOLOR = Color.Blue;
-        private Color FIXED_BACKCOLOR = Color.LightSteelBlue;
-
-        private Color USER_FORECOLOR = Color.Black;
-
-        private Color USER_BACKCOLOR = Color.LightYellow;
-        private int SelectedNumber;
-
-        private Stack<string> Moves;
-        private Stack<string> RedoMoves;
-        private Stack<int[,]> ActualStack = new Stack<int[,]>();
-        private Stack<string[,]> PossibleStack = new Stack<string[,]>();
-
-        private bool BruteForceStop = false;
+        private bool brute_forcestop = false;
 
         private string saveFileName = string.Empty;
         private int[,] actual = new int[10, 10];
         private string[,] possible = new string[10, 10];
-        private bool HintMode;
+        private bool hint_mode;
         private int seconds = 0;
-
         //
         private int cPos;
         private int rPos;
         private bool changes;
-        
-       
+        private bool game_started = false;
 
-        private bool GameStarted = false;
         public Form1()
         {
             InitializeComponent();
@@ -63,25 +57,25 @@ namespace SudokuDogan
         public void DrawBoard()
         {
             toolStripButton1.Checked = true;
-            SelectedNumber = 1;
+            selected_Number = 1;
             Point location = new Point();
 
             for (int row = 1; row <= 9; row++)
             {
                 for (int col = 1; col <= 9; col++)
                 {
-                    location.X = col * (CellWidth + 1) + xOffset;
-                    location.Y = row * (cellHeight + 1) + yOffset;
+                    location.X = col * (cell_Width + 1) + x_Offset;
+                    location.Y = row * (cell_Height + 1) + y_Offset;
                     Label lbl = new Label();
 
                     var _with1 = lbl;
                     _with1.Name = col.ToString() + row.ToString();
                     _with1.BorderStyle = BorderStyle.Fixed3D;
                     _with1.Location = location;
-                    _with1.Width = CellWidth;
-                    _with1.Height = cellHeight;
+                    _with1.Width = cell_Width;
+                    _with1.Height = cell_Height;
                     _with1.TextAlign = ContentAlignment.MiddleCenter;
-                    _with1.BackColor = DEFAULT_BACKCOLOR;
+                    _with1.BackColor = deffault_backcolor;
                     _with1.Font = new Font(_with1.Font, _with1.Font.Style | FontStyle.Bold);
                     _with1.Tag = "1";
                     lbl.Click += Cell_Click;
@@ -92,7 +86,7 @@ namespace SudokuDogan
 
         private void Cell_Click(object sender, EventArgs e)
         {
-            if (!GameStarted)
+            if (!game_started)
             {
                 //txtActivitis shows a warning to the user
                 DisplayActivity("Click File->New to start a new" + " game or File->Open to load an existing game", true);
@@ -110,28 +104,28 @@ namespace SudokuDogan
             int row = int.Parse(cellLabel.Name.Substring(1, 1));
 
             //to erase a cell
-            if (SelectedNumber == 0)
+            if (selected_Number == 0)
             {
                 if (actual[col, row] == 0)
                     //it means that the cell is empty so dont do anything
                     return;
                 else
                 {
-                    SetCell(col, row, SelectedNumber, 1);
+                    SetCell(col, row, selected_Number, 1);
                     DisplayActivity("Number erased at (" + col + "," + row + ")", false);
                 }
             }
             else if (cellLabel.Text == string.Empty)
             {
-                if (!IsMoveValid(col, row, SelectedNumber))
+                if (!IsMoveValid(col, row, selected_Number))
                 {
                    DisplayActivity("Invalid move at (" + col + "," + row + ")", false);
                     return;
                 }
 
-                SetCell(col, row, SelectedNumber, 1);
+                SetCell(col, row, selected_Number, 1);
                 DisplayActivity("Number placed at (" + col + "," + row + ")", false);
-                Moves.Push(cellLabel.Name.ToString() + SelectedNumber);
+                moves.Push(cellLabel.Name.ToString() + selected_Number);
                 if (IsPuzzleSolved())
                 {
                     timer1.Enabled = false;
@@ -185,20 +179,20 @@ namespace SudokuDogan
             {
                 cellLabel.Text = string.Empty;
                 cellLabel.Tag = erasable;
-                cellLabel.BackColor = DEFAULT_BACKCOLOR;
+                cellLabel.BackColor = deffault_backcolor;
 
             }
             else
             {
                 if (erasable == 0)
                 {
-                    cellLabel.BackColor = FIXED_BACKCOLOR;
-                    cellLabel.ForeColor = FIXED_FORECOLOR;
+                    cellLabel.BackColor = fixed_backcolor;
+                    cellLabel.ForeColor = fixed_forecolor;
                 }
                 else
                 {
-                    cellLabel.BackColor = USER_BACKCOLOR;
-                    cellLabel.ForeColor = USER_FORECOLOR;
+                    cellLabel.BackColor = user_backcolor;
+                    cellLabel.ForeColor = user_forecolor;
                 }
                 cellLabel.Text = value.ToString();
                 cellLabel.Tag = erasable;
@@ -212,6 +206,7 @@ namespace SudokuDogan
             //give the possible values
             toolTip1.SetToolTip(((Label)(lbl[0])), possiblevalues);
         }
+
         private bool IsPuzzleSolved()
         {
             //now checking the row by row 
@@ -319,19 +314,19 @@ namespace SudokuDogan
             int y1 = 0;
             int x2 = 0;
             int y2 = 0;
-            x1 = 1 * (CellWidth + 1) + xOffset - 1;
-            x2 = 9 * (CellWidth + 1) + xOffset + CellWidth;
+            x1 = 1 * (cell_Width + 1) + x_Offset - 1;
+            x2 = 9 * (cell_Width + 1) + x_Offset + cell_Width;
             for (int r = 1; r <= 10; r += 3)
             {
-                y1 = r * (cellHeight + 1) + yOffset - 1;
+                y1 = r * (cell_Height + 1) + y_Offset - 1;
                 y2 = y1;
                 e.Graphics.DrawLine(Pens.Black, x1, y1, x2, y2);
             }
-            y1 = 1 * (cellHeight + 1) + yOffset - 1;
-            y2 = 9 * (cellHeight + 1) + yOffset + cellHeight;
+            y1 = 1 * (cell_Height + 1) + y_Offset - 1;
+            y2 = 9 * (cell_Height + 1) + y_Offset + cell_Height;
             for (int c = 1; c <= 10; c += 3)
             {
-                x1 = c * (CellWidth + 1) + xOffset - 1;
+                x1 = c * (cell_Width + 1) + x_Offset - 1;
                 x2 = x1;
                 e.Graphics.DrawLine(Pens.Black, x1, y1, x2, y2);
             }
@@ -339,69 +334,69 @@ namespace SudokuDogan
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 1;
+            selected_Number = 1;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 1" + Environment.NewLine;
         }
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 2;
+            selected_Number = 2;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 2" + Environment.NewLine;
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 3;
+            selected_Number = 3;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 3" + Environment.NewLine;
         }
 
         private void toolStripButton4_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 4;
+            selected_Number = 4;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 4" + Environment.NewLine;
         }
 
         private void toolStripButton5_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 5;
+            selected_Number = 5;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 5" + Environment.NewLine;
         }
 
         private void toolStripButton6_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 6;
+            selected_Number = 6;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 6" + Environment.NewLine;
         }
 
         private void toolStripButton7_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 7;
+            selected_Number = 7;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 7" + Environment.NewLine;
         }
 
         private void toolStripButton8_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 8;
+            selected_Number = 8;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 8" + Environment.NewLine;
         }
 
         private void toolStripButton9_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 9;
+            selected_Number = 9;
             //txtActivities.Text = string.Empty;
             txtActivities.Text += "Selected number = 9" + Environment.NewLine;
         }
 
         private void toolStripButton10_Click(object sender, EventArgs e)
         {
-            SelectedNumber = 0;
+            selected_Number = 0;
             txtActivities.Text = string.Empty;
             txtActivities.Text = "Selected number has been erased." + Environment.NewLine;
         }
@@ -482,7 +477,7 @@ namespace SudokuDogan
             ClearBoard();
             //GenerateNewPuzzle(1,40);
 
-            GameStarted = true;
+            game_started = true;
             timer1.Enabled = true;
             toolStripStatusLabel1.Text = "New game started";
 
@@ -491,8 +486,8 @@ namespace SudokuDogan
 
         private void ClearBoard()
         {
-            Moves = new Stack<string>();
-            RedoMoves = new Stack<string>();
+            moves = new Stack<string>();
+            redoMoves = new Stack<string>();
             for (int row = 1; row <= 9; row++)
             {
                 for (int col = 1; col <= 9; col++)
@@ -511,14 +506,14 @@ namespace SudokuDogan
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //if this is the first move or not- so do nothing
-            if ((Moves.Count == 0))
+            if ((moves.Count == 0))
             {
                 return;
             }
 
 
-            string str = Moves.Pop();
-            RedoMoves.Push(str);
+            string str = moves.Pop();
+            redoMoves.Push(str);
             
             SetCell(int.Parse(str[0].ToString()), int.Parse(str[1].ToString()), 0, 1);
             DisplayActivity(("Value removed at (" + (int.Parse(str[0].ToString()) + "," + int.Parse(str[1].ToString()) + ")")), false);
@@ -528,11 +523,11 @@ namespace SudokuDogan
 
         private void redoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (RedoMoves.Count == 0)
+            if (redoMoves.Count == 0)
                 return;
 
-            string str = RedoMoves.Pop();
-            Moves.Push(str);
+            string str = redoMoves.Pop();
+            moves.Push(str);
             
             
             SetCell(int.Parse(str[0].ToString()), int.Parse(str[1].ToString()), int.Parse(str[2].ToString()), 1);
@@ -541,7 +536,7 @@ namespace SudokuDogan
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!GameStarted)
+            if (!game_started)
             {
                 DisplayActivity("Game not started yet.", true);
                 return;
@@ -551,7 +546,7 @@ namespace SudokuDogan
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!GameStarted)
+            if (!game_started)
             {
                 DisplayActivity("Game not started yet.", true);
                 return;
@@ -561,7 +556,7 @@ namespace SudokuDogan
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (GameStarted)
+            if (game_started)
             {
                 DialogResult response = MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                 if (response == DialogResult.Yes)
@@ -710,9 +705,9 @@ namespace SudokuDogan
                             //refresh the application
                             Application.DoEvents();
 
-                            Moves.Push((col + (row + possible[col, row])));
+                            moves.Push((col + (row + possible[col, row])));
                             changes = true;
-                            if (HintMode)
+                            if (hint_mode)
                             {
                                 return true;
                             }
@@ -727,7 +722,7 @@ namespace SudokuDogan
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (GameStarted)
+            if (game_started)
             {
                 DialogResult response = MessageBox.Show("Do you want to save current game?", "Save current game", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
@@ -757,8 +752,8 @@ namespace SudokuDogan
                     possible[c, r] = String.Empty;
                 }
             }
-            ActualStack.Clear();
-            PossibleStack.Clear();
+            actual_stack.Clear();
+            possible_stack.Clear();
             //try
             //{
             //    if (!SolvePuzzle())
@@ -789,9 +784,9 @@ namespace SudokuDogan
             //        numberofemptycells = RandomNumber(54, 58);
             //        break;
             //}
-            ActualStack.Clear();
-            PossibleStack.Clear();
-            BruteForceStop = false;
+            actual_stack.Clear();
+            possible_stack.Clear();
+            brute_forcestop = false;
             //CreateEmptyCells(numberofemptycells);
             str = String.Empty;
             for (r = 1; (r <= 9); r++)
@@ -897,13 +892,12 @@ namespace SudokuDogan
     //    }
     //}
 
-
         private void btnSolvePuzzle_Click(object sender, EventArgs e)
         {
             //MessageBox.Show("It will be show the possible solved sudoku!");
             //return;
 
-            HintMode = false;
+            hint_mode = false;
             try
             {
                 SolvePuzzle();
@@ -918,7 +912,7 @@ namespace SudokuDogan
         {
             //MessageBox.Show("Possible numbers in each cell will be shown");
 
-            HintMode = true;
+            hint_mode = true;
             try
             {
                 SolvePuzzle();
@@ -930,41 +924,6 @@ namespace SudokuDogan
 
         }
        
-    //    public bool SolvePuzzle() 
-    //    {
-    //        bool changes;
-    //        bool ExitLoop = false;
-    //        try
-    //        {
-    //            changes = CheckColumnsAndRows();
-    //            while (!changes)
-    //            {
-    //                if ((HintMode && changes) || IsPuzzleSolved())
-    //                {
-    //                    ExitLoop = true;
-    //                    //SolvePuzzleByBruteForce();
-    //                    break;
-    //                }
-    //            }
-                
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            throw new Exception("Invalid Move");
-    //        }
-
-    //    if (IsPuzzleSolved()) {
-    //        timer1.Enabled = false;
-    //        SystemSounds.Beep.Play();
-    //        toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
-    //        MessageBox.Show("Puzzle solved");
-    //        return true;
-    //    }
-    //    else {
-    //        return false;
-    //    }
-    //}
-
         public bool SolvePuzzle()
         {
             //bool changes;
@@ -980,7 +939,7 @@ namespace SudokuDogan
                             while (!changes)
                             {
                                 changes = CheckColumnsAndRows();
-                                if ((HintMode && changes) || IsPuzzleSolved())
+                                if ((hint_mode && changes) || IsPuzzleSolved())
                                 {
                                     ExitLoop = true;
                                     break;
@@ -990,7 +949,7 @@ namespace SudokuDogan
                             {
                                 break;
                                 changes = LookForLoneRangersinMinigrids();
-                                if (((HintMode && changes) || IsPuzzleSolved()))
+                                if (((hint_mode && changes) || IsPuzzleSolved()))
                                 {
                                     ExitLoop = true;
                                     break;
@@ -1004,7 +963,7 @@ namespace SudokuDogan
                             break;
                         }
                         changes = LookForLoneRangersinRows();
-                        if (((HintMode && changes) || IsPuzzleSolved()))
+                        if (((hint_mode && changes) || IsPuzzleSolved()))
                         {
                             ExitLoop = true;
                             break;
@@ -1016,7 +975,7 @@ namespace SudokuDogan
                         break;
                     }
                     changes = LookForLoneRangersinColumns();
-                    if (((HintMode && changes) || IsPuzzleSolved()))
+                    if (((hint_mode && changes) || IsPuzzleSolved()))
                     {
                         ExitLoop = true;
                         break;
@@ -1041,8 +1000,7 @@ namespace SudokuDogan
                                 return false;
                             }
             }
-        
-        
+           
         public bool LookForLoneRangersinMinigrids()
         {
             bool changes = false;
@@ -1083,13 +1041,13 @@ namespace SudokuDogan
                             
                             SetCell(cPos, rPos, n, 1);
                             SetToolTip(cPos, rPos, n.ToString());
-                            Moves.Push((cPos + (rPos + n.ToString())));
+                            moves.Push((cPos + (rPos + n.ToString())));
                             DisplayActivity("Look for Lone Rangers in Minigrids", false);
                             DisplayActivity("===========================", false);
                             DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false);
                             Application.DoEvents();
                             changes = true;
-                            if (HintMode)
+                            if (hint_mode)
                             {
                                 return true;
                             }
@@ -1126,14 +1084,14 @@ namespace SudokuDogan
                                     
                                     SetCell(cPos, rPos, n, 1); 
                                     SetToolTip(cPos, rPos, n.ToString()); 
-                                    Moves.Push((cPos + (rPos + n.ToString()))); 
+                                    moves.Push((cPos + (rPos + n.ToString()))); 
                                     DisplayActivity("Look for Lone Rangers in Rows", false); 
                                     DisplayActivity("=========================", false); 
                                     DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false); 
                                     Application.DoEvents(); 
                                     changes = true; 
                                     
-                                    if (HintMode) 
+                                    if (hint_mode) 
                                     { 
                                         return true; 
                                     } 
@@ -1178,13 +1136,13 @@ namespace SudokuDogan
                         SetCell(cPos, rPos, n, 1);
                         SetToolTip(cPos, rPos, n.ToString());
                         // ---saves the move into the stack
-                        Moves.Push((cPos + (rPos + n.ToString())));
+                        moves.Push((cPos + (rPos + n.ToString())));
                         DisplayActivity("Look for Lone Rangers in Columns", false);
                         DisplayActivity("===========================", false);
                         DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false);
                         Application.DoEvents();
                         changes = true;
-                        if (HintMode)
+                        if (hint_mode)
                         {
                             return true;
                         }
@@ -1194,7 +1152,6 @@ namespace SudokuDogan
             }
             return changes;
         }
-
 
         private void easyToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1226,7 +1183,7 @@ namespace SudokuDogan
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("This program has been created in 2014!");
+            MessageBox.Show("This program has been created in 2014!" + Environment.NewLine + "Dogan Alkan");
         }
 
         //private void SolvePuzzleByBruteForce()
