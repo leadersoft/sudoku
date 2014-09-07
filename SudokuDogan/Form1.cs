@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Media;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Printing;
 
 namespace SudokuDogan
 {
@@ -44,10 +46,18 @@ namespace SudokuDogan
         private bool HintMode;
         private int seconds = 0;
 
+        //
+        private int cPos;
+        private int rPos;
+        private bool changes;
+        
+       
+
         private bool GameStarted = false;
         public Form1()
         {
             InitializeComponent();
+            
         }
 
         public void DrawBoard()
@@ -197,7 +207,9 @@ namespace SudokuDogan
 
         public void SetToolTip(int col, int row, string possiblevalues)
         {
+            //find the cursor and cell
             Control[] lbl = this.Controls.Find((col.ToString() + row.ToString()), true);
+            //give the possible values
             toolTip1.SetToolTip(((Label)(lbl[0])), possiblevalues);
         }
         private bool IsPuzzleSolved()
@@ -498,16 +510,18 @@ namespace SudokuDogan
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            //if this is the first move or not- so do nothing
             if ((Moves.Count == 0))
             {
                 return;
             }
 
+
             string str = Moves.Pop();
             RedoMoves.Push(str);
             
-            SetCell(int.Parse(str), int.Parse(str), 0, 1);
-            DisplayActivity(("Value removed at (" + (int.Parse(str) + ")")), false);
+            SetCell(int.Parse(str[0].ToString()), int.Parse(str[1].ToString()), 0, 1);
+            DisplayActivity(("Value removed at (" + (int.Parse(str[0].ToString()) + "," + int.Parse(str[1].ToString()) + ")")), false);
 
 
         }
@@ -520,9 +534,9 @@ namespace SudokuDogan
             string str = RedoMoves.Pop();
             Moves.Push(str);
             
-            //not sure if it might work
-            SetCell(int.Parse(str), int.Parse(str), int.Parse(str), 1);
-            DisplayActivity(("Value reinserted at (" + int.Parse(str)+ ")"), false);
+            
+            SetCell(int.Parse(str[0].ToString()), int.Parse(str[1].ToString()), int.Parse(str[2].ToString()), 1);
+            DisplayActivity(("Value reinserted at (" + int.Parse(str[0].ToString())+ "," + int.Parse(str[1].ToString()) + ")"), false);
         }
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -580,8 +594,6 @@ namespace SudokuDogan
             
             StartNewGame();
 
-           
-
             //starting the board
             int counter;
             
@@ -594,13 +606,12 @@ namespace SudokuDogan
                   
                     try
                     {
-                        if (int.Parse(fileContents[row-1][counter].ToString()) != 0 )
-                            
+                        if (int.Parse(fileContents[row - 1][counter].ToString()) != 0 || !fileContents[row - 1][counter].ToString().Contains("."))
                         {
                             //erasable is 1- but in normal way it should be 0 so user cannot change the numbers.
-                            SetCell(col, row, int.Parse(fileContents[row-1][counter].ToString()), 0);
-                            
+                            SetCell(col, row, int.Parse(fileContents[row - 1][counter].ToString()), 0);
                         }
+                        
                     }
                     catch
                     {
@@ -617,26 +628,30 @@ namespace SudokuDogan
             {
        
             string str;
-            if ((possible[col, row] == String.Empty)) {
+            if ((possible[col, row] == String.Empty)) 
+            {
                 str = "123456789";
             }
-            else {
+            else 
+            {
                 str = possible[col, row];
             }
+            
             int r;
             int c;
             // checking by column 
             for (r = 1; (r <= 9); r++) {
                 if ((actual[col, r] != 0)) {
-                
+                    //cell is not empty
                     str = str.Replace(actual[col, r].ToString(), String.Empty);
                 }
             }
             // checking by row 
             for (c = 1; (c <= 9); c++) 
             {
-                if ((actual[c, row] != 0)) {
-               
+                if ((actual[c, row] != 0)) 
+                {
+                    //cell is not empty
                     str = str.Replace(actual[c, row].ToString(), String.Empty);
                 }
             }
@@ -655,14 +670,13 @@ namespace SudokuDogan
                     }
                 }
             }
+            
             // if there is not possible value, it means that invalid move
             if ((str == String.Empty)) 
             {
             throw new Exception("Invalid Move");
             }
             return str;
-      
-
         }
 
         public bool CheckColumnsAndRows() 
@@ -683,6 +697,7 @@ namespace SudokuDogan
                             DisplayActivity("Invalid placement, please undo move", false);
                             throw new Exception("Invalid Move");
                         }
+                        //displaying the possible number
                         SetToolTip(col, row, possible[col, row]);
                         if ((possible[col, row].Length == 1))
                         {
@@ -691,7 +706,10 @@ namespace SudokuDogan
                             DisplayActivity("Col/Row and Minigrid Elimination", false);
                             DisplayActivity("=========================", false);
                             DisplayActivity(("Inserted value " + (actual[col, row] + (" in " + ("(" + (col + ("," + (row + ")"))))))), false);
+                            
+                            //refresh the application
                             Application.DoEvents();
+
                             Moves.Push((col + (row + possible[col, row])));
                             changes = true;
                             if (HintMode)
@@ -912,41 +930,271 @@ namespace SudokuDogan
 
         }
        
-        public bool SolvePuzzle() 
+    //    public bool SolvePuzzle() 
+    //    {
+    //        bool changes;
+    //        bool ExitLoop = false;
+    //        try
+    //        {
+    //            changes = CheckColumnsAndRows();
+    //            while (!changes)
+    //            {
+    //                if ((HintMode && changes) || IsPuzzleSolved())
+    //                {
+    //                    ExitLoop = true;
+    //                    //SolvePuzzleByBruteForce();
+    //                    break;
+    //                }
+    //            }
+                
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            throw new Exception("Invalid Move");
+    //        }
+
+    //    if (IsPuzzleSolved()) {
+    //        timer1.Enabled = false;
+    //        SystemSounds.Beep.Play();
+    //        toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
+    //        MessageBox.Show("Puzzle solved");
+    //        return true;
+    //    }
+    //    else {
+    //        return false;
+    //    }
+    //}
+
+        public bool SolvePuzzle()
         {
-            bool changes;
+            //bool changes;
             bool ExitLoop = false;
-
-
             try
             {
-                do
+                while (!changes)
                 {
-                    changes = CheckColumnsAndRows();
-                    if ((HintMode && changes) || IsPuzzleSolved())
+                    while (!changes)
+                    {
+                        while (!changes)
+                        {
+                            while (!changes)
+                            {
+                                changes = CheckColumnsAndRows();
+                                if ((HintMode && changes) || IsPuzzleSolved())
+                                {
+                                    ExitLoop = true;
+                                    break;
+                                }
+                            }
+                            if (ExitLoop)
+                            {
+                                break;
+                                changes = LookForLoneRangersinMinigrids();
+                                if (((HintMode && changes) || IsPuzzleSolved()))
+                                {
+                                    ExitLoop = true;
+                                    break;
+                                }
+                            }
+                        }
+
+
+                        if (ExitLoop)
+                        {
+                            break;
+                        }
+                        changes = LookForLoneRangersinRows();
+                        if (((HintMode && changes) || IsPuzzleSolved()))
+                        {
+                            ExitLoop = true;
+                            break;
+                        }
+                    }
+
+                    if (ExitLoop)
+                    {
+                        break;
+                    }
+                    changes = LookForLoneRangersinColumns();
+                    if (((HintMode && changes) || IsPuzzleSolved()))
                     {
                         ExitLoop = true;
-                        //SolvePuzzleByBruteForce();
-                        break; 
+                        break;
                     }
-                } while (!(!changes));
+                }
             }
+
             catch (Exception ex)
             {
                 throw new Exception("Invalid Move");
             }
+                if (IsPuzzleSolved())
+                            {
+                                timer1.Enabled = false;
+                                SystemSounds.Beep.Play();
+                                toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
+                                MessageBox.Show("Puzzle solved");
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+            }
+        
+        
+        public bool LookForLoneRangersinMinigrids()
+        {
+            bool changes = false;
+            bool NextMiniGrid;
+            int occurrence;
+            
+            for (int n = 1; (n <= 9); n++)
+            {
+                for (int r = 1; (r <= 9); r = (r + 3))
+                {
+                    for (int c = 1; (c <= 9); c = (c + 3))
+                    {
+                        NextMiniGrid = false;
+                        occurrence = 0;
+                        for (int rr = 0; (rr <= 2); rr++)
+                        {
+                            for (int cc = 0; (cc <= 2); cc++)
+                            {
+                                if (((actual[(c + cc), (r + rr)] == 0) && possible[(c + cc), (r + rr)].Contains(n.ToString())))
+                                {
+                                    occurrence++;
+                                    cPos = (c + cc);
+                                    rPos = (r + rr);
+                                    if ((occurrence > 1))
+                                    {
+                                        NextMiniGrid = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (NextMiniGrid)
+                            {
+                                break;
+                            }
+                        }
+                        if (!NextMiniGrid && (occurrence == 1))
+                        {
+                            
+                            SetCell(cPos, rPos, n, 1);
+                            SetToolTip(cPos, rPos, n.ToString());
+                            Moves.Push((cPos + (rPos + n.ToString())));
+                            DisplayActivity("Look for Lone Rangers in Minigrids", false);
+                            DisplayActivity("===========================", false);
+                            DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false);
+                            Application.DoEvents();
+                            changes = true;
+                            if (HintMode)
+                            {
+                                return true;
+                            }
+                            
+                        }
+                    }
+                }
+            }
+            return changes;
+        }
 
-        if (IsPuzzleSolved()) {
-            timer1.Enabled = false;
-            SystemSounds.Beep.Play();
-            toolStripStatusLabel1.Text = "*****Puzzle Solved*****";
-            MessageBox.Show("Puzzle solved");
-            return true;
+        public bool LookForLoneRangersinRows() 
+        { 
+            bool changes = false; 
+            int occurrence; 
+            
+                for (int r = 1; (r <= 9); r++) 
+                { 
+                    for (int n = 1; (n <= 9); n++) 
+                    { 
+                        occurrence = 0; 
+                        for (int c = 1; (c <= 9); c++) 
+                        { 
+                            if (((actual[c, r] == 0) && possible[c, r].Contains(n.ToString()))) 
+                            { occurrence++; 
+                                if ((occurrence > 1)) 
+                                { 
+                                    break; 
+                                    cPos = c; 
+                                    rPos = r; 
+                                } 
+                                if ((occurrence == 1)) 
+                                {
+                                    
+                                    SetCell(cPos, rPos, n, 1); 
+                                    SetToolTip(cPos, rPos, n.ToString()); 
+                                    Moves.Push((cPos + (rPos + n.ToString()))); 
+                                    DisplayActivity("Look for Lone Rangers in Rows", false); 
+                                    DisplayActivity("=========================", false); 
+                                    DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false); 
+                                    Application.DoEvents(); 
+                                    changes = true; 
+                                    
+                                    if (HintMode) 
+                                    { 
+                                        return true; 
+                                    } 
+                                    
+                                } 
+                            } 
+                        } 
+                    } 
+                }
+                return changes; 
         }
-        else {
-            return false;
+
+        public bool LookForLoneRangersinColumns()
+        {
+            bool changes = false;
+            int occurrence;
+            
+            // ----check by column----
+            for (int c = 1; (c <= 9); c++)
+            {
+                for (int n = 1; (n <= 9); n++)
+                {
+                    occurrence = 0;
+                    for (int r = 1; (r <= 9); r++)
+                    {
+                        if (((actual[c, r] == 0) && possible[c, r].Contains(n.ToString())))
+                        {
+                            occurrence++;
+                            // ---if multiple occurrences, not a lone ranger anymore
+                            if (occurrence > 1)
+                            {
+                                break;
+                            }
+                            cPos = c;
+                            rPos = r;
+                        }
+                    }
+                    if ((occurrence == 1))
+                    {
+                        // --number is confirmed---
+                        
+                        SetCell(cPos, rPos, n, 1);
+                        SetToolTip(cPos, rPos, n.ToString());
+                        // ---saves the move into the stack
+                        Moves.Push((cPos + (rPos + n.ToString())));
+                        DisplayActivity("Look for Lone Rangers in Columns", false);
+                        DisplayActivity("===========================", false);
+                        DisplayActivity(("Inserted value " + (n.ToString() + (" in " + ("(" + (cPos + ("," + (rPos + ")"))))))), false);
+                        Application.DoEvents();
+                        changes = true;
+                        if (HintMode)
+                        {
+                            return true;
+                        }
+                        
+                    }
+                }
+            }
+            return changes;
         }
-    }
+
 
         private void easyToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -974,6 +1222,11 @@ namespace SudokuDogan
             easyToolStripMenuItem.Checked = false;
             mediumToolStripMenuItem.Checked = false;
             hardToolStripMenuItem.Checked = false;
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("This program has been created in 2014!");
         }
 
         //private void SolvePuzzleByBruteForce()
