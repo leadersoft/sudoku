@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Media;
 using System.IO;
-using System.Drawing;
-using System.Drawing.Printing;
+
 
 namespace SudokuDogan
 {
@@ -414,6 +413,42 @@ namespace SudokuDogan
             }
 
             StartNewGame();
+            
+            //System.Windows.Forms.Cursor.Current = Cursors.WaitCursor;
+            //toolStripStatusLabel1.Text = "Generating new puzzle...";
+            //SudokuPuzzle sp = new SudokuPuzzle();
+            //string puzzle = String.Empty;
+            //if (easyToolStripMenuItem.Checked)
+            //{
+            //    puzzle = sp.GetNewPuzzle(1);
+            //}
+            //else if (mediumToolStripMenuItem.Checked)
+            //{
+            //    puzzle = sp.GetNewPuzzle(2);
+            //}
+            //else if (hardToolStripMenuItem.Checked)
+            //{
+            //    puzzle = sp.GetNewPuzzle(3);
+            //}
+            //else if (samuraiToolStripMenuItem.Checked)
+            //{
+            //    puzzle = sp.GetNewPuzzle(4);
+            //}
+            //System.Windows.Forms.Cursor.Current = Cursors.Default;
+            
+            //StartNewGame();
+            //int counter = 0;
+            //for (int row = 1; (row <= 9); row++)
+            //{
+            //    for (int col = 1; (col <= 9); col++)
+            //    {
+            //        if ((puzzle(counter).ToString() != "0"))
+            //        {
+            //            SetCell(col, row, int.Parse(puzzle(counter).ToString()), 0);
+            //        }
+            //        counter++;
+            //    }
+            //}
         }
 
         private void SaveGameToDisk(bool p)
@@ -591,7 +626,7 @@ namespace SudokuDogan
 
             //starting the board
             int counter;
-            
+           
             
             for (int row = 1; (row <= 9); row++)
             {
@@ -601,12 +636,15 @@ namespace SudokuDogan
                   
                     try
                     {
-                        if (int.Parse(fileContents[row - 1][counter].ToString()) != 0 || !fileContents[row - 1][counter].ToString().Contains("."))
-                        {
-                            //erasable is 1- but in normal way it should be 0 so user cannot change the numbers.
-                            SetCell(col, row, int.Parse(fileContents[row - 1][counter].ToString()), 0);
-                        }
+                        //trying to replace all non numbers to 0
+                        fileContents[row - 1] = System.Text.RegularExpressions.Regex.Replace(fileContents[row - 1].ToString(), "[^0-9.]", "0");
                         
+                        if (int.Parse(fileContents[row - 1][counter].ToString()) != 0)
+                        {
+                           //erasable is 1- but in normal way it should be 0 so user cannot change the numbers.
+                           SetCell(col, row, int.Parse(fileContents[row - 1][counter].ToString()), 0);
+                        }
+                      
                     }
                     catch
                     {
@@ -837,61 +875,6 @@ namespace SudokuDogan
             throw new NotImplementedException();
         }
 
-        //private void RandomizeThePossibleValues(string str)
-        //{
-        //    char[,] s;
-        //    int i;
-        //    int j;
-        //    char temp;
-        //    Randomize();
-        //    s = str.ToCharArray;
-        //    for (i = 0; (i <= (str.Length - 1)); i++)
-        //    {
-        //        j = (int.Parse(((((str.Length - i) + 1) * Rnd()) + i)) % str.Length);
-        //        temp = s[i];
-        //        s[i] = s[j];
-        //        s[j] = temp;
-        //    }
-        //    str = s;
-        //}
-
-    //    private void CreateEmptyCells(int numberofemptycells)
-    //    {
-    //        //private void CreateEmptyCells(int empty) {
-    //        int c;
-    //        int r;
-    //        string[] emptyCells = new string[numberofemptycells-1];
-    //        for (int i = 0; (i <= numberofemptycells / 2); i++) 
-    //        { 
-    //            bool duplicate = false;   
-                
-    //            while ((r == 5) && (c > 5))
-    //             {
-                    
-    //                c = RandomNumber(1, 9);
-    //                r = RandomNumber(1, 5);
-                    
-    //            //for (int j = 0; (j <= i); j++) 
-    //            //{
-    //            //    if (((emptyCells[j] == c.ToString()) + r.ToString())) 
-    //            //    {
-    //            //        duplicate = true;
-    //            //        break;
-    //            //    }
-    //            //}
-    //            if (!duplicate) 
-    //            {
-    //                emptyCells[i] = (c.ToString() + r.ToString());
-    //                actual[c, r] = 0;
-    //                possible[c, r] = String.Empty;
-    //                emptyCells[(numberofemptycells - (1 - i))] = (((10 - c)).ToString() + ((10 - r)).ToString());
-    //                actual[(10 - c), (10 - r)] = 0;
-    //                possible[(10 - c), (10 - r)] = String.Empty;
-    //            }
-    //            }
-    //    }
-    //}
-
         private void btnSolvePuzzle_Click(object sender, EventArgs e)
         {
             //MessageBox.Show("It will be show the possible solved sudoku!");
@@ -1038,7 +1021,7 @@ namespace SudokuDogan
                         }
                         if (!NextMiniGrid && (occurrence == 1))
                         {
-                            
+                            //number is there
                             SetCell(cPos, rPos, n, 1);
                             SetToolTip(cPos, rPos, n.ToString());
                             moves.Push((cPos + (rPos + n.ToString())));
@@ -1185,82 +1168,6 @@ namespace SudokuDogan
         {
             MessageBox.Show("This program has been created in 2014!" + Environment.NewLine + "Dogan Alkan");
         }
-
-        //private void SolvePuzzleByBruteForce()
-        //{
-        //    int col;
-        //    int row;
-        //    string possibleValues;
-        //    //FindCellWithFewestPossibleValues(c, r);
-
-         
-        //    int min = 10;
-        //    for (int r = 1; (r <= 9); r++)
-        //    {
-        //        for (int c = 1; (c <= 9); c++)
-        //        {
-        //            if (((actual[c, r] == 0) && (possible[c, r].Length < min)))
-        //            {
-        //                min = possible[c, r].Length;
-                        
-        //                col = c;
-        //                row = r;
-        //            }
-        //        }
-        //    }
-        //    possibleValues = possible[col, row];
-
-        //    //string possibleValues = possible[col, row];
-        //    ActualStack.Push(((int[,])(actual.Clone())));
-        //    PossibleStack.Push(((string[,])(possible.Clone())));
-        //    for (int i = 0; (i <= (possibleValues.Length - 1)); i++)
-        //    {
-        //        Moves.Push((col + (row + possibleValues.ToString())));
-
-        //        SetCell(col, row, int.Parse(possibleValues.ToString()), 1);
-        //        DisplayActivity("Solve Puzzle By Brute Force", false);
-        //        DisplayActivity("===========================", false);
-        //        DisplayActivity(("Trying to insert value " + (actual[col, row] + (" in " + ("(" + (col + ("," + (row + ")"))))))), false);
-
-        //        try
-        //        {
-        //            if (SolvePuzzle())
-        //            {
-        //                BruteForceStop = true;
-        //                return;
-        //            }
-        //            else
-        //            {
-        //                SolvePuzzleByBruteForce();
-        //                if (BruteForceStop)
-        //                    return;
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            DisplayActivity("Invalid move; Backtracking...", false);
-        //            actual = ActualStack.Pop();
-        //            possible = PossibleStack.Pop();
-        //        }
-        //    }
-        //}
-
-        //public void FindCellWithFewestPossibleValues(int col, int row)
-        //{
-        //    int min = 10;
-        //    for (int r = 1; (r <= 9); r++)
-        //    {
-        //        for (int c = 1; (c <= 9); c++)
-        //        {
-        //            if (((actual[c, r] == 0) && (possible[c, r].Length < min)))
-        //            {
-        //                min = possible[c, r].Length;
-        //                col = c;
-        //                row = r;
-        //            }
-        //        }
-        //    }
-        //}
 
     }
 }
